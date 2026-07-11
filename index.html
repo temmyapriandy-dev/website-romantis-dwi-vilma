@@ -715,79 +715,56 @@
       font-size: 0.84rem;
     }
 
-    .modal {
+    .audio-player {
       position: fixed;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      padding: 20px;
-      background: rgba(51, 27, 35, 0.72);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      z-index: 100;
-      opacity: 0;
-      visibility: hidden;
-      transition: 0.25s ease;
-    }
-
-    .modal.open {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .modal-panel {
-      width: min(900px, 100%);
-      border-radius: 26px;
-      overflow: hidden;
-      background: #1f1117;
-      box-shadow: 0 30px 90px rgba(0,0,0,0.38);
-      transform: translateY(14px) scale(0.98);
-      transition: 0.25s ease;
-    }
-
-    .modal.open .modal-panel {
-      transform: none;
-    }
-
-    .modal-top {
+      right: 18px;
+      bottom: 18px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 16px;
-      padding: 16px 18px;
-      color: white;
+      gap: 12px;
+      max-width: calc(100% - 36px);
+      padding: 10px 14px 10px 10px;
+      border: 1px solid rgba(255,255,255,0.86);
+      border-radius: 999px;
+      background: rgba(255,250,251,0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 14px 40px rgba(104,47,65,0.18);
+      z-index: 100;
     }
 
-    .modal-top strong {
-      font-family: Georgia, "Times New Roman", serif;
-      font-weight: 500;
-    }
-
-    .close-btn {
-      width: 38px;
-      height: 38px;
+    .audio-toggle {
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
       display: grid;
       place-items: center;
       border: 0;
       border-radius: 50%;
       cursor: pointer;
       color: white;
-      background: rgba(255,255,255,0.12);
-      font-size: 1.2rem;
+      background: linear-gradient(135deg, #d76e8a, #a83f5e);
+      box-shadow: 0 8px 18px rgba(168,63,94,0.24);
+      font-size: 0.9rem;
     }
 
-    .video-wrap {
-      position: relative;
-      aspect-ratio: 16 / 9;
-      background: #000;
+    .audio-info {
+      min-width: 0;
     }
 
-    .video-wrap iframe {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
+    .audio-info strong,
+    .audio-info span {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .audio-info strong { font-size: 0.82rem; }
+    .audio-info span { color: var(--muted); font-size: 0.72rem; margin-top: 2px; }
+
+    .audio-player.error .audio-info span {
+      color: var(--accent-dark);
     }
 
     .floating-heart {
@@ -1157,55 +1134,59 @@
     Dibuat dengan ♡ oleh Timothy Apriandy Putra untuk Dwi Vilma.
   </footer>
 
-  <div class="modal" id="musicModal" role="dialog" aria-modal="true" aria-labelledby="musicTitle">
-    <div class="modal-panel">
-      <div class="modal-top">
-        <strong id="musicTitle">Shape of My Heart — Backstreet Boys</strong>
-        <button class="close-btn" id="closeMusic" type="button" aria-label="Tutup pemutar musik">×</button>
-      </div>
-      <div class="video-wrap" id="videoContainer"></div>
+  <div class="audio-player" id="audioPlayer">
+    <button class="audio-toggle" id="audioToggle" type="button" aria-label="Putar Shape of My Heart" aria-pressed="false">▶</button>
+    <div class="audio-info">
+      <strong>Shape of My Heart</strong>
+      <span id="audioStatus">Backstreet Boys · siap diputar</span>
     </div>
   </div>
+  <audio id="backgroundMusic" loop preload="metadata">
+    <source src="assets/music/shape-of-my-heart.mp3" type="audio/mpeg" />
+  </audio>
 
   <script>
-    const modal = document.getElementById("musicModal");
-    const closeMusic = document.getElementById("closeMusic");
-    const videoContainer = document.getElementById("videoContainer");
+    const backgroundMusic = document.getElementById("backgroundMusic");
+    const audioPlayer = document.getElementById("audioPlayer");
+    const audioToggle = document.getElementById("audioToggle");
+    const audioStatus = document.getElementById("audioStatus");
     const vinyl = document.getElementById("vinyl");
     const openMusicButtons = document.querySelectorAll(".open-music");
 
-    function openMusic() {
-      videoContainer.innerHTML = `
-        <iframe
-          src="https://www.youtube-nocookie.com/embed/OT5msu-dap8?autoplay=1&rel=0"
-          title="Shape of My Heart — Backstreet Boys"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen>
-        </iframe>`;
-      modal.classList.add("open");
-      vinyl.classList.add("playing");
-      document.body.style.overflow = "hidden";
+    function updateMusicUI(isPlaying) {
+      audioToggle.textContent = isPlaying ? "❚❚" : "▶";
+      audioToggle.setAttribute("aria-label", isPlaying ? "Jeda Shape of My Heart" : "Putar Shape of My Heart");
+      audioToggle.setAttribute("aria-pressed", String(isPlaying));
+      audioStatus.textContent = isPlaying ? "Backstreet Boys · sedang diputar" : "Backstreet Boys · dijeda";
+      vinyl.classList.toggle("playing", isPlaying);
+      openMusicButtons.forEach((button) => {
+        button.querySelector("span").textContent = isPlaying ? "❚❚" : "▶";
+        button.lastChild.textContent = isPlaying ? " Jeda Lagu Kita" : " Putar Lagu Kita";
+      });
     }
 
-    function closeMusicModal() {
-      modal.classList.remove("open");
-      videoContainer.innerHTML = "";
-      vinyl.classList.remove("playing");
-      document.body.style.overflow = "";
-    }
-
-    openMusicButtons.forEach((button) => button.addEventListener("click", openMusic));
-    closeMusic.addEventListener("click", closeMusicModal);
-
-    modal.addEventListener("click", (event) => {
-      if (event.target === modal) closeMusicModal();
-    });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && modal.classList.contains("open")) {
-        closeMusicModal();
+    async function toggleMusic() {
+      audioPlayer.classList.remove("error");
+      if (!backgroundMusic.paused) {
+        backgroundMusic.pause();
+        return;
       }
+
+      try {
+        await backgroundMusic.play();
+      } catch (error) {
+        audioPlayer.classList.add("error");
+        audioStatus.textContent = "Tambahkan file MP3 ke folder assets/music";
+      }
+    }
+
+    openMusicButtons.forEach((button) => button.addEventListener("click", toggleMusic));
+    audioToggle.addEventListener("click", toggleMusic);
+    backgroundMusic.addEventListener("play", () => updateMusicUI(true));
+    backgroundMusic.addEventListener("pause", () => updateMusicUI(false));
+    backgroundMusic.addEventListener("error", () => {
+      audioPlayer.classList.add("error");
+      audioStatus.textContent = "Tambahkan file MP3 ke folder assets/music";
     });
 
     const relationshipStart = new Date("2022-08-18T00:00:00+07:00");
